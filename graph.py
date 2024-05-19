@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-
+from collections import deque
 
 G = nx.Graph()
 edge_list = [
@@ -35,26 +35,72 @@ for edge in edge_list:
 node_degrees = nx.degree(G)
 for node, degree in node_degrees:
     print(f"Degree of node {node}: {degree}")
-
+print("\n")
 print(f"Amount of nodes: {len(G.nodes)}")
 print(f"Amount of edges: {len(G.edges)}")
+print("\n")
+
+# pos = nx.spring_layout(G)
+# nx.draw(G, pos, with_labels=True, node_color="skyblue", node_size=700, font_size=10)
+# labels = nx.get_edge_attributes(G, "weight")
+# nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
+# plt.show()
 
 
-pos = nx.spring_layout(G)
-nx.draw(G, pos, with_labels=True, node_color="skyblue", node_size=700, font_size=10)
-labels = nx.get_edge_attributes(G, "weight")
-nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-plt.show()
+def dijkstra(graph, start):
+    distances = {vertex: float("infinity") for vertex in graph.nodes}
+    distances[start] = 0
+    unvisited = set(graph.nodes)
+
+    while unvisited:
+        current_vertex = min(unvisited, key=lambda vertex: distances[vertex])
+
+        if distances[current_vertex] == float("infinity"):
+            break
+
+        for neighbor in graph.neighbors(current_vertex):
+            weight = graph[current_vertex][neighbor]["weight"]
+            distance = distances[current_vertex] + weight
+
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+
+        unvisited.remove(current_vertex)
+
+    return distances
 
 
-dfs_tree = nx.dfs_tree(G, source="A")
-print("DFS Tree:", dfs_tree.edges())
+def dfs_recursive(graph, vertex, visited=None):
+    if visited is None:
+        visited = set()
+    visited.add(vertex)
+    print(vertex, end=" ")
+    for neighbor in graph.neighbors(vertex):
+        if neighbor not in visited:
+            dfs_recursive(graph, neighbor, visited)
 
-bfs_tree = nx.bfs_tree(G, source="A")
-print("BFS Tree:", bfs_tree.edges())
 
-shortest_path_cost = nx.shortest_path_length(G, source="A", target="N", weight="weight")
-shortest_path = nx.shortest_path(G, source="A", target="N", weight="weight")
+def bfs_recursive(graph, queue, visited=None):
+    if visited is None:
+        visited = set()
 
-print(shortest_path_cost)
-print(shortest_path)
+    if not queue:
+        return
+
+    vertex = queue.popleft()
+
+    if vertex not in visited:
+        print(vertex, end=" ")
+        visited.add(vertex)
+        queue.extend(set(graph.neighbors(vertex)) - visited)
+
+    bfs_recursive(graph, queue, visited)
+
+
+print("Distances:")
+distances_from_A = dijkstra(G, "A")
+print(distances_from_A)
+print("\n\nDFS:")
+dfs_recursive(G, "A")
+print("\n\nBFS:")
+bfs_recursive(G, deque(["A"]))
